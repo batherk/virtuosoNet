@@ -29,7 +29,7 @@ parser.add_argument("-trill", "--trainTrill", default=False, type=lambda x: (str
 parser.add_argument("-slur", "--slurEdge", default=False, type=lambda x: (str(x).lower() == 'true'), help="slur edge in graph")
 parser.add_argument("-voice", "--voiceEdge", default=True, type=lambda x: (str(x).lower() == 'true'), help="network in voice level")
 parser.add_argument("-vel", "--velocity", type=str, default='50,65', help="mean velocity of piano and forte")
-parser.add_argument("-dev", "--device", type=int, default=1, help="cuda device number")
+parser.add_argument("-dev", "--device", type=int, default=-1, help="cuda device number")
 parser.add_argument("-code", "--modelCode", type=str, default='isgn', help="code name for saving the model")
 parser.add_argument("-tCode", "--trillCode", type=str, default='trill_default', help="code name for loading trill model")
 parser.add_argument("-comp", "--composer", type=str, default='Beethoven', help="composer name of the input piece")
@@ -342,7 +342,7 @@ def scale_model_prediction_to_original(prediction, MEANS, STDS):
 def load_file_and_generate_performance(path_name, composer=args.composer, z=args.latent, 
                                         start_tempo=args.startTempo, return_features=False, multi_instruments=args.multi_instruments):
     vel_pair = (int(args.velocity.split(',')[0]), int(args.velocity.split(',')[1]))
-    test_x, xml_notes, xml_doc, edges, note_locations, part_names = xml_matching.read_xml_to_array(path_name, MEANS, STDS,
+    test_x, xml_notes, xml_doc, edges, note_locations = xml_matching.read_xml_to_array(path_name, MEANS, STDS,
                                                                                        start_tempo, composer,
                                                                                        vel_pair)
     batch_x = torch.Tensor(test_x)
@@ -398,12 +398,12 @@ def load_file_and_generate_performance(path_name, composer=args.composer, z=args
 
     output_xml = xml_matching.apply_tempo_perform_features(xml_doc, xml_notes, output_features, start_time=1,
                                                            predicted=True)
-    output_midi, midi_pedals = xml_matching.xml_notes_to_midi(output_xml, multi_instruments)
+    output_midi, midi_pedals = xml_matching.xml_notes_to_midi(output_xml)
     piece_name = path_name.split('/')
     save_name = 'test_result/' + piece_name[-2] + '_by_' + args.modelCode + '_z' + str(z)
 
     perf_worm.plot_performance_worm(output_features, save_name + '.png')
-    xml_matching.save_midi_notes_as_piano_midi(output_midi, midi_pedals, save_name + '.mid', part_names=part_names,
+    xml_matching.save_midi_notes_as_piano_midi(output_midi, midi_pedals, save_name + '.mid',
                                                bool_pedal=args.boolPedal, disklavier=args.disklavier)
 
 
