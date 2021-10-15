@@ -5,3 +5,4 @@ midi_utils/
 mscx_files/
 *.pyc
 **/.DS_Store
+training_data.dat
