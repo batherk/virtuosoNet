@@ -15,6 +15,8 @@ TRILL = False
 DISKLAVIER = False
 PEDAL = False
 RESUME_TRAINING = False
+START_TEMPO = 0
+VELOCITY = '50,65'
 
 learning_rate = 0.0003
 TIME_STEPS = 500

@@ -284,12 +284,14 @@ def load_file_and_generate_performance(
     path_name,
     composer,
     z,
-    start_tempo,
     means,
     stds,
-    velocity,
+        bins,
     model,
     model_type,
+    trill_model,
+    start_tempo=settings.START_TEMPO,
+    velocity=settings.VELOCITY,
     num_output=settings.NUM_OUTPUT,
     device=settings.DEVICE,
     qpm_primo_idx=settings.QPM_PRIMO_IDX,
@@ -298,13 +300,13 @@ def load_file_and_generate_performance(
     is_pedal=settings.PEDAL,
     is_disklavier=settings.DISKLAVIER,
     in_HIER=settings.IN_HIER,
-    trill_model=None,
     hier_code=None,
-    return_features=False,
+    generate_song=True,
+    generate_png=True
 ):
     vel_pair = (int(velocity.split(",")[0]), int(velocity.split(",")[1]))
     test_x, xml_notes, xml_doc, edges, note_locations = xml_matching.read_xml_to_array(
-        path_name, means, stds, start_tempo, composer, vel_pair
+        dpath() + path_name, means, stds, start_tempo, composer, vel_pair
     )
     batch_x = torch.Tensor(test_x)
     num_notes = len(test_x)
@@ -353,7 +355,7 @@ def load_file_and_generate_performance(
         if type(initial_z) is list:
             initial_z = initial_z[0]
         batch_x = batch_x.to(device).view(1, -1, num_input)
-        graph = edges_to_matrix(edges, batch_x.shape[1])
+        graph = edges_to_matrix(edges, batch_x.shape[1], model)
         prediction, _ = run_model_in_steps(
             batch_x, input_y, graph, note_locations, initial_z=initial_z, model=model
         )
@@ -368,30 +370,29 @@ def load_file_and_generate_performance(
     )
 
     prediction = torch.cat((prediction, trill_prediction), 2)
-    prediction = scale_model_prediction_to_original(prediction, means, stds)
+    prediction = scale_model_prediction_to_original(prediction, means, stds, bins)
 
     output_features = xml_matching.model_prediction_to_feature(prediction)
     output_features = xml_matching.add_note_location_to_features(
         output_features, note_locations
     )
-    if return_features:
-        return output_features
-
-    output_xml = xml_matching.apply_tempo_perform_features(
-        xml_doc, xml_notes, output_features, start_time=1, predicted=True
-    )
-    output_midi, midi_pedals = xml_matching.xml_notes_to_midi(output_xml)
     piece_name = path_name.split("/")
     save_name = "test_result/" + piece_name[-2] + "_by_" + model_type + "_z" + str(z)
-
-    perf_worm.plot_performance_worm(output_features, save_name + ".png")
-    xml_matching.save_midi_notes_as_piano_midi(
-        output_midi,
-        midi_pedals,
-        save_name + ".mid",
-        bool_pedal=is_pedal,
-        disklavier=is_disklavier,
-    )
+    if generate_png:
+        perf_worm.plot_performance_worm(output_features, save_name + ".png")
+    if generate_song:
+        output_xml = xml_matching.apply_tempo_perform_features(
+            xml_doc, xml_notes, output_features, start_time=1, predicted=True
+        )
+        output_midi, midi_pedals = xml_matching.xml_notes_to_midi(output_xml)
+        xml_matching.save_midi_notes_as_piano_midi(
+            output_midi,
+            midi_pedals,
+            save_name + ".mid",
+            bool_pedal=is_pedal,
+            disklavier=is_disklavier,
+        )
+    return output_features
 
 
 def load_file_and_encode_style(
@@ -531,7 +532,7 @@ def run_model_in_steps(
     edges,
     note_locations,
     model,
-    valid_steps,
+    valid_steps=settings.VALID_STEPS,
     device=settings.DEVICE,
     initial_z=False,
 ):
