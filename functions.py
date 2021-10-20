@@ -88,7 +88,10 @@ def initialize_model(model_type, net_param, device=settings.DEVICE):
 
 def load_model(model_type, device=settings.DEVICE):
     params = load_params(model_type)
-    return initialize_model(model_type, params, device)
+    model = initialize_model(model_type, params, device)
+    checkpoint = torch.load(dpath() + model_type + '_best.pth.tar', map_location=torch.device(device))
+    model.load_state_dict(checkpoint['state_dict'])
+    return model
 
 
 def mse_criterion(pred, target, aligned_status=1, device=settings.DEVICE):
