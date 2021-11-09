@@ -132,7 +132,7 @@ def get_parser():
                         default='MSE', help='type of training loss')
     
     # environment options
-    parser.add_argument("-dev", "--device", type=int,
+    parser.add_argument("-dev", "--device", type=str,
                         default=0, help="cuda device number")
     parser.add_argument("--num_workers", type=int,
                         default=0, help="num workers for dataloader")
@@ -170,7 +170,7 @@ def get_parser():
     # inference options
     parser.add_argument("-dskl", "--disklavier", default=True,
                         type=lambda x: (str(x).lower() == 'true'), help="save midi for disklavier")
-    parser.add_argument("--multi_instruments", default=True,
+    parser.add_argument("--multi_instruments", default=False,
                         type=lambda x: (str(x).lower() == 'true'), help="save multi instruments as separate track")
     parser.add_argument("--tempo_clock", default=False,
                         type=lambda x: (str(x).lower() == 'true'), help="add tempo clock track in output MIDI")

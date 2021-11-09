@@ -1,0 +1,1 @@
+python3 -m virtuoso --session_mode=inference --checkpoint=saved_models/checkpoint_best.pt --yml_path=saved_models/han_measnote.yml --xml_path=test_pieces/bps_5_1/musicxml_cleaned.musicxml --device=cpu
